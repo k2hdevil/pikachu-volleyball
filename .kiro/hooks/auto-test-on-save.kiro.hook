@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "저장 시 자동 테스트",
+  "description": "TypeScript 또는 JavaScript 파일 저장 시 최소 출력으로 자동 테스트를 실행합니다",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.ts",
+      "**/*.js",
+      "**/*.tsx",
+      "**/*.jsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "코드 파일이 저장되었습니다. 해당 파일에 적합한 테스트를 실행하고 실패 사항을 보고해주세요. 중요: 세션 타임아웃을 방지하기 위해 최소 출력 모드를 사용하세요 - --silent, --quiet 등의 플래그를 추가하세요. 테스트 파일인 경우 필터링(--grep, --testNamePattern)으로 직접 실행하세요. 소스 파일인 경우 관련 테스트를 찾아 실행하세요. 사용 명령어 예시: npm test -- --silent, yarn test --silent, npx jest --silent --testNamePattern='특정테스트', 또는 pytest -q -k 'test_name'."
+  }
+}

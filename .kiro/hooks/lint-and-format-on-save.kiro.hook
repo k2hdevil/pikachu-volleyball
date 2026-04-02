@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "저장 시 린트 및 포맷팅",
+  "description": "파일 저장 시 프로젝트 표준에 따라 자동으로 코드를 린트하고 포맷팅합니다",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.ts",
+      "**/*.js",
+      "**/*.tsx",
+      "**/*.jsx",
+      "**/*.py",
+      "**/*.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "코드 파일이 저장되었습니다. 다음을 수행해주세요:\n1. 적절한 린터 실행 (JS/TS는 ESLint, Python은 flake8/pylint)\n2. 적절한 포맷터 실행 (JS/TS는 Prettier, Python은 Black)\n3. 자동 수정 가능한 이슈 수정\n4. 수동 수정이 필요한 나머지 이슈 보고\n\n프로젝트의 기존 설정 파일(.eslintrc, .prettierrc, pyproject.toml 등)을 사용하고 확립된 코딩 표준을 따르세요."
+  }
+}

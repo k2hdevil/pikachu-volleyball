@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "의존성 변경 시 보안 스캔",
+  "description": "패키지 파일 수정 시 보안 모범 사례에 따라 보안 감사를 실행합니다",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "package.json",
+      "package-lock.json",
+      "yarn.lock",
+      "requirements.txt",
+      "poetry.lock",
+      "Pipfile.lock"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "의존성 파일이 수정되었습니다. 다음을 수행해주세요:\n1. 보안 감사 실행 (npm audit, yarn audit, 또는 Python의 경우 pip-audit)\n2. 의존성의 알려진 취약점 확인\n3. 취약한 패키지에 대한 업데이트 제안\n4. 즉시 조치가 필요한 고위험 이슈 보고\n5. 보안 위험을 초래할 수 있는 새로운 의존성 확인\n6. 모든 의존성이 신뢰할 수 있는 출처이며 활발히 유지보수되는지 확인\n7. 의존성 관리 보안 모범 사례 준수"
+  }
+}
