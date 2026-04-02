@@ -9,8 +9,8 @@ import { Renderer } from './renderer.js';
 const State = { READY: 'READY', PLAYING: 'PLAYING', SCORED: 'SCORED', GAME_OVER: 'GAME_OVER' };
 
 export class Game {
-  constructor(ctx, pikachuImg) {
-    this.renderer = new Renderer(ctx, pikachuImg);
+  constructor(ctx) {
+    this.renderer = new Renderer(ctx);
     this.p1 = new Pikachu(1);
     this.p2 = new Pikachu(2);
     this.ball = new Ball();

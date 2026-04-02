@@ -1,22 +1,14 @@
-// 초기화 및 게임 시작 - 에셋 프리로딩 후 게임 시작
+// 초기화 및 게임 시작
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
 import { initInput } from './input.js';
 import { Game } from './game.js';
 
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-async function init() {
+function init() {
   const canvas = document.getElementById('gameCanvas');
   canvas.width = CANVAS_WIDTH;
   canvas.height = CANVAS_HEIGHT;
 
+  // 반응형 크기 조정
   function resize() {
     const scale = Math.min(window.innerWidth / CANVAS_WIDTH, window.innerHeight / CANVAS_HEIGHT, 2);
     canvas.style.width = (CANVAS_WIDTH * scale) + 'px';
@@ -26,14 +18,11 @@ async function init() {
   window.addEventListener('resize', resize);
 
   const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-
-  // 에셋 프리로딩
-  const pikachuImg = await loadImage('asset/pikachu.png');
+  ctx.imageSmoothingEnabled = false; // 픽셀 아트 선명도 유지
 
   initInput();
 
-  const game = new Game(ctx, pikachuImg);
+  const game = new Game(ctx);
   game.start();
 }
 

@@ -6,9 +6,8 @@ import {
 } from './config.js';
 
 export class Renderer {
-  constructor(ctx, pikachuImg) {
+  constructor(ctx) {
     this.ctx = ctx;
-    this.pikachuImg = pikachuImg;
   }
 
   clear() {
@@ -94,24 +93,82 @@ export class Renderer {
 
   drawPikachu(pikachu) {
     const ctx = this.ctx;
-    const img = this.pikachuImg;
-    if (!img) return;
+    const cx = pikachu.getCenterX();
+    const cy = pikachu.getCenterY();
+    const w = pikachu.width;
+    const h = pikachu.height;
+    const facingRight = pikachu.side === 1;
 
-    const drawW = pikachu.width + 16;
-    const drawH = pikachu.height + 16;
-    const drawX = pikachu.x - 8;
-    const drawY = pikachu.y - 8;
+    // 몸통
+    ctx.fillStyle = COLORS.pikachu;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 4, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = COLORS.pikachuDark;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-    ctx.save();
-    if (pikachu.side === 2) {
-      // P2는 좌우 반전
-      ctx.translate(drawX + drawW, drawY);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0, drawW, drawH);
-    } else {
-      ctx.drawImage(img, drawX, drawY, drawW, drawH);
-    }
-    ctx.restore();
+    // 귀
+    const earDir = facingRight ? 1 : -1;
+    ctx.fillStyle = COLORS.pikachu;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6 * earDir, cy - h / 2 + 4);
+    ctx.lineTo(cx - 14 * earDir, cy - h / 2 - 14);
+    ctx.lineTo(cx + 2 * earDir, cy - h / 2 + 2);
+    ctx.fill();
+    ctx.fillStyle = COLORS.pikachuEar;
+    ctx.beginPath();
+    ctx.moveTo(cx - 10 * earDir, cy - h / 2 - 10);
+    ctx.lineTo(cx - 14 * earDir, cy - h / 2 - 14);
+    ctx.lineTo(cx - 6 * earDir, cy - h / 2 - 4);
+    ctx.fill();
+
+    ctx.fillStyle = COLORS.pikachu;
+    ctx.beginPath();
+    ctx.moveTo(cx + 6 * earDir, cy - h / 2 + 4);
+    ctx.lineTo(cx + 16 * earDir, cy - h / 2 - 12);
+    ctx.lineTo(cx + 12 * earDir, cy - h / 2 + 4);
+    ctx.fill();
+    ctx.fillStyle = COLORS.pikachuEar;
+    ctx.beginPath();
+    ctx.moveTo(cx + 12 * earDir, cy - h / 2 - 8);
+    ctx.lineTo(cx + 16 * earDir, cy - h / 2 - 12);
+    ctx.lineTo(cx + 10 * earDir, cy - h / 2 - 2);
+    ctx.fill();
+
+    // 눈
+    const eyeOffsetX = facingRight ? 6 : -6;
+    ctx.fillStyle = COLORS.pikachuEye;
+    ctx.beginPath();
+    ctx.arc(cx + eyeOffsetX, cy - 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // 눈 하이라이트
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(cx + eyeOffsetX + 1, cy - 3, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 볼
+    ctx.fillStyle = COLORS.pikachuCheek;
+    ctx.beginPath();
+    ctx.arc(cx + (facingRight ? 12 : -12), cy + 4, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 꼬리 (번개 모양)
+    const tailDir = facingRight ? -1 : 1;
+    ctx.fillStyle = COLORS.pikachu;
+    ctx.strokeStyle = COLORS.pikachuDark;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + tailDir * 18, cy);
+    ctx.lineTo(cx + tailDir * 24, cy - 10);
+    ctx.lineTo(cx + tailDir * 20, cy - 4);
+    ctx.lineTo(cx + tailDir * 28, cy - 16);
+    ctx.lineTo(cx + tailDir * 22, cy - 6);
+    ctx.lineTo(cx + tailDir * 26, cy - 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   }
 
   drawBall(ball) {
