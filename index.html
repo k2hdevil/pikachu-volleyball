@@ -2,27 +2,75 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>피카츄 배구</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       background: #222;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       overflow: hidden;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     canvas {
       border: 2px solid #555;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
+    #touchControls {
+      display: none;
+      width: 100%;
+      max-width: 432px;
+      justify-content: space-between;
+      padding: 12px 8px;
+      gap: 8px;
+    }
+    .touch-group {
+      display: flex;
+      gap: 8px;
+    }
+    .touch-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid #888;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .touch-btn:active {
+      background: rgba(255,215,0,0.4);
+      border-color: #FFD700;
+    }
+    .touch-btn.wide {
+      width: 80px;
+      font-size: 14px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+  <div id="touchControls">
+    <div class="touch-group">
+      <button class="touch-btn" id="btnLeft">◀</button>
+      <button class="touch-btn" id="btnRight">▶</button>
+    </div>
+    <div class="touch-group">
+      <button class="touch-btn wide" id="btnSpike">SPIKE</button>
+      <button class="touch-btn" id="btnJump">▲</button>
+    </div>
+  </div>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
