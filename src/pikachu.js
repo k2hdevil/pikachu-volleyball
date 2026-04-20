@@ -1,8 +1,8 @@
-// 피카츄 엔티티 - 이동, 점프, AI 로직
+// 피카츄 엔티티 - 이동, 점프, 단계별 AI 로직
 import {
   PIKACHU_SPEED, PIKACHU_JUMP_POWER, PIKACHU_GRAVITY,
   PIKACHU_WIDTH, PIKACHU_HEIGHT, GROUND_Y, CANVAS_WIDTH,
-  NET_X, NET_WIDTH, AI_REACTION_SPEED, AI_JUMP_THRESHOLD
+  NET_X, NET_WIDTH, AI_DIFFICULTY, CURRENT_AI_DIFFICULTY
 } from './config.js';
 import { isKeyDown } from './input.js';
 
@@ -12,6 +12,7 @@ export class Pikachu {
     this.width = PIKACHU_WIDTH;
     this.height = PIKACHU_HEIGHT;
     this.isJumping = false;
+    this.aiConfig = AI_DIFFICULTY[CURRENT_AI_DIFFICULTY];
     this.reset();
   }
 
@@ -65,18 +66,25 @@ export class Pikachu {
     this.vx = 0;
     if (!ball) return;
 
-    // 공이 자기 코트에 있거나 넘어올 때 반응
-    const targetX = ball.x + ball.vx * 15; // 예측 위치
+    const { reactionSpeed, jumpThreshold, predictionFrames, mistakeChance } = this.aiConfig;
+
+    // 실수 확률: 일정 확률로 잘못된 방향으로 이동
+    const makingMistake = Math.random() < mistakeChance;
+
+    // 공의 예측 위치 (난이도에 따라 예측 프레임 수 변동)
+    const targetX = ball.x + ball.vx * predictionFrames;
     const centerX = this.x + this.width / 2;
     const diff = targetX - centerX;
 
     if (Math.abs(diff) > 10) {
-      this.vx = diff > 0 ? AI_REACTION_SPEED : -AI_REACTION_SPEED;
+      const direction = diff > 0 ? 1 : -1;
+      // 실수 시 반대 방향으로 이동
+      this.vx = (makingMistake ? -direction : direction) * reactionSpeed;
     }
 
-    // 공이 가까이 오면 점프
+    // 공이 가까이 오면 점프 (난이도에 따라 임계값 변동)
     const distToBall = Math.hypot(ball.x - centerX, ball.y - (this.y + this.height / 2));
-    if (distToBall < AI_JUMP_THRESHOLD && ball.y < this.y && !this.isJumping) {
+    if (distToBall < jumpThreshold && ball.y < this.y && !this.isJumping) {
       this.vy = PIKACHU_JUMP_POWER;
       this.isJumping = true;
     }

@@ -1,5 +1,35 @@
-// 충돌 감지 - 원형(피카츄-공), AABB(공-네트)
-import { NET_X, NET_WIDTH, NET_Y, NET_HEIGHT, GROUND_Y, NET_TOP_RADIUS, BALL_BOUNCE } from './config.js';
+// 충돌 감지 - 원형(피카츄-공), AABB(공-네트), 동시 다중 충돌 처리
+import {
+  NET_X, NET_WIDTH, NET_Y, NET_HEIGHT, GROUND_Y,
+  NET_TOP_RADIUS, BALL_BOUNCE, PHYSICS_STEP
+} from './config.js';
+
+// 고정 timestep 물리 업데이트 (프레임 독립성 보장)
+let accumulator = 0;
+
+export function updatePhysics(dt, ball, p1, p2) {
+  accumulator += dt;
+
+  // 고정 간격으로 물리 스텝 실행
+  while (accumulator >= PHYSICS_STEP) {
+    // 엔티티 업데이트
+    p1.update(PHYSICS_STEP, ball);
+    p2.update(PHYSICS_STEP, ball);
+    ball.update(PHYSICS_STEP);
+
+    // 충돌 처리 (순서: 네트 → 피카츄1 → 피카츄2)
+    // 네트를 먼저 처리하여 공이 네트를 관통하지 않도록 보장
+    checkNetBallCollision(ball);
+    checkPikachuBallCollision(p1, ball);
+    checkPikachuBallCollision(p2, ball);
+
+    accumulator -= PHYSICS_STEP;
+  }
+}
+
+export function resetPhysicsAccumulator() {
+  accumulator = 0;
+}
 
 // 피카츄-공 원형 충돌
 export function checkPikachuBallCollision(pikachu, ball) {
@@ -30,7 +60,6 @@ export function checkPikachuBallCollision(pikachu, ball) {
 export function checkNetBallCollision(ball) {
   const netLeft = NET_X - NET_WIDTH / 2;
   const netRight = NET_X + NET_WIDTH / 2;
-  const netTop = NET_Y;
 
   // 네트 상단 원형 충돌
   const topCenterX = NET_X;
@@ -53,7 +82,7 @@ export function checkNetBallCollision(ball) {
 
   // 네트 기둥 AABB 충돌
   if (ball.x + ball.radius > netLeft && ball.x - ball.radius < netRight &&
-      ball.y + ball.radius > netTop && ball.y - ball.radius < GROUND_Y) {
+      ball.y + ball.radius > NET_Y && ball.y - ball.radius < GROUND_Y) {
     // 좌우 반사
     if (ball.x < NET_X) {
       ball.x = netLeft - ball.radius;

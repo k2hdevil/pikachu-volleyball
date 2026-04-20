@@ -6,11 +6,26 @@ HTML5 Canvas 기반 2D 피카츄 배구 게임입니다.
 
 ## 🎮 플레이 방법
 
+### ⌨️ 키보드 (데스크톱)
+
 | 키 | 동작 |
 |----|------|
 | ← → | 이동 |
 | ↑ | 점프 |
 | Space | 게임 시작 / 스파이크 / 재시작 |
+
+### 📱 터치 (모바일)
+
+터치 기기에서 자동으로 화면 하단에 가상 버튼이 표시됩니다.
+
+| 버튼 | 동작 |
+|------|------|
+| ◀ ▶ | 이동 |
+| ▲ | 점프 |
+| ⚡ | 스파이크 |
+| 캔버스 터치 | 게임 시작 / 재시작 |
+
+멀티터치를 지원하여 이동과 점프를 동시에 입력할 수 있습니다.
 
 ## 🚀 실행
 
@@ -29,7 +44,7 @@ python3 -m http.server 8000
 ├── index.html          # 진입점
 ├── src/
 │   ├── config.js       # 게임 상수 (물리, 크기, 색상)
-│   ├── input.js        # 키보드 입력 핸들러
+│   ├── input.js        # 키보드 + 모바일 터치 입력 (멀티터치 지원)
 │   ├── ball.js         # 공 엔티티
 │   ├── pikachu.js      # 피카츄 엔티티 (P1 + AI)
 │   ├── physics.js      # 충돌 감지 및 반사
@@ -40,6 +55,35 @@ python3 -m http.server 8000
 │   └── screenshot.png  # 레퍼런스 이미지
 └── .kiro/              # AI-DLC 설정 (steering, hooks, agents, skills)
 ```
+
+## ⚙️ 게임 설정 (`src/config.js`)
+
+모든 게임 상수를 한 파일에서 관리합니다. 밸런스 조정 시 이 파일만 수정하면 됩니다.
+
+| 카테고리 | 주요 상수 | 설명 |
+|----------|-----------|------|
+| 캔버스 | `CANVAS_WIDTH/HEIGHT` | 432×304 (원작 비율) |
+| 물리 | `GRAVITY`, `BALL_BOUNCE`, `BALL_MAX_SPEED` | 중력, 반발 계수, 최대 속도 |
+| 피카츄 | `PIKACHU_SPEED`, `PIKACHU_JUMP_POWER` | 이동 속도, 점프력 |
+| AI | `AI_DIFFICULTY`, `CURRENT_AI_DIFFICULTY` | easy/normal/hard 프리셋 |
+| 점수 | `WIN_SCORE` | 승리 점수 (기본 15점) |
+| 색상 | `COLORS` | 원작 기반 색상 팔레트 |
+
+AI 난이도를 변경하려면 `CURRENT_AI_DIFFICULTY` 값을 `'easy'`, `'normal'`, `'hard'` 중 하나로 설정하세요.
+
+## 🔄 게임 상태 흐름
+
+```
+READY → ROUND_READY → PLAYING → SCORED → ROUND_READY → ... → GAME_OVER
+```
+
+| 상태 | 설명 |
+|------|------|
+| READY | 초기 시작 화면 (Space로 시작) |
+| ROUND_READY | 라운드 시작 전 준비 화면 (~1.5초) |
+| PLAYING | 게임 진행 중 |
+| SCORED | 득점 후 대기 (~1초) |
+| GAME_OVER | 15점 도달 시 승리 화면 (Space로 재시작) |
 
 ## 🏗️ 기술 스택
 

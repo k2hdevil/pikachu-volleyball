@@ -1,12 +1,29 @@
 // 게임 상태 머신 + requestAnimationFrame 기반 메인 루프
+// 물리 업데이트는 physics.js의 고정 timestep으로 분리
+//
+// 상태 흐름:
+//   READY → ROUND_READY → PLAYING → SCORED → ROUND_READY → ...
+//   PLAYING → GAME_OVER (15점 도달 시)
+//
+// - READY: 초기 시작 화면 (Space로 시작)
+// - ROUND_READY: 라운드 시작 전 준비 화면 (~1.5초 카운트다운)
+// - PLAYING: 게임 진행 중
+// - SCORED: 득점 후 잠시 대기 (~1초)
+// - GAME_OVER: 승리 화면 (Space로 재시작)
 import { WIN_SCORE } from './config.js';
 import { isKeyDown } from './input.js';
 import { Ball } from './ball.js';
 import { Pikachu } from './pikachu.js';
-import { checkPikachuBallCollision, checkNetBallCollision } from './physics.js';
+import { updatePhysics, resetPhysicsAccumulator } from './physics.js';
 import { Renderer } from './renderer.js';
 
-const State = { READY: 'READY', PLAYING: 'PLAYING', SCORED: 'SCORED', GAME_OVER: 'GAME_OVER' };
+const State = {
+  READY: 'READY',
+  ROUND_READY: 'ROUND_READY',
+  PLAYING: 'PLAYING',
+  SCORED: 'SCORED',
+  GAME_OVER: 'GAME_OVER',
+};
 
 export class Game {
   constructor(ctx) {
@@ -19,6 +36,7 @@ export class Game {
     this.state = State.READY;
     this.lastScorer = 0;
     this.scoredTimer = 0;
+    this.readyTimer = 0;
     this.lastTime = 0;
     this.serveSide = 1;
   }
@@ -43,20 +61,21 @@ export class Game {
     switch (this.state) {
       case State.READY:
         if (isKeyDown('Space')) {
+          this.enterRoundReady();
+        }
+        break;
+
+      case State.ROUND_READY:
+        this.readyTimer -= 1;
+        if (this.readyTimer <= 0) {
           this.state = State.PLAYING;
-          this.resetRound(this.serveSide);
+          resetPhysicsAccumulator();
         }
         break;
 
       case State.PLAYING:
-        this.p1.update(dt, this.ball);
-        this.p2.update(dt, this.ball);
-        this.ball.update(dt);
-
-        // 충돌 처리
-        checkPikachuBallCollision(this.p1, this.ball);
-        checkPikachuBallCollision(this.p2, this.ball);
-        checkNetBallCollision(this.ball);
+        // 고정 timestep 물리 업데이트 (프레임 독립적)
+        updatePhysics(dt, this.ball, this.p1, this.p2);
 
         // 바닥 착지 → 점수
         if (this.ball.isOnGround()) {
@@ -75,16 +94,15 @@ export class Game {
             this.state = State.GAME_OVER;
           } else {
             this.state = State.SCORED;
-            this.scoredTimer = 60; // ~1초
+            this.scoredTimer = 60; // 60프레임 (dt 정규화 기준 ~1초)
           }
         }
         break;
 
       case State.SCORED:
-        this.scoredTimer -= 1;
+        this.scoredTimer -= dt;
         if (this.scoredTimer <= 0) {
-          this.state = State.PLAYING;
-          this.resetRound(this.serveSide);
+          this.enterRoundReady();
         }
         break;
 
@@ -107,6 +125,8 @@ export class Game {
 
     if (this.state === State.READY) {
       this.renderer.drawReadyScreen();
+    } else if (this.state === State.ROUND_READY) {
+      this.renderer.drawRoundReady(this.readyTimer);
     } else if (this.state === State.SCORED) {
       this.renderer.drawScoredScreen(this.lastScorer);
     } else if (this.state === State.GAME_OVER) {
@@ -121,11 +141,17 @@ export class Game {
     this.ball.reset(serveSide);
   }
 
+  // "Ready" 표시 후 플레이 시작으로 전환
+  enterRoundReady() {
+    this.resetRound(this.serveSide);
+    this.state = State.ROUND_READY;
+    this.readyTimer = 90; // ~1.5초 (60fps 기준)
+  }
+
   resetGame() {
     this.p1Score = 0;
     this.p2Score = 0;
     this.serveSide = 1;
-    this.state = State.PLAYING;
-    this.resetRound(1);
+    this.enterRoundReady();
   }
 }

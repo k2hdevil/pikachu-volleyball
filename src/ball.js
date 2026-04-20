@@ -1,5 +1,8 @@
-// 공 엔티티 - 물리(중력, 속도), 경계 충돌
-import { BALL_RADIUS, GRAVITY, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT, BALL_BOUNCE } from './config.js';
+// 공 엔티티 - 물리(중력, 속도), 경계 충돌, 고속 관통 방지
+import {
+  BALL_RADIUS, GRAVITY, GROUND_Y, CANVAS_WIDTH,
+  BALL_BOUNCE, BALL_MAX_SPEED
+} from './config.js';
 
 export class Ball {
   constructor() {
@@ -18,6 +21,10 @@ export class Ball {
 
   update(dt) {
     this.vy += GRAVITY * dt;
+
+    // 고속 관통 방지: 속도 제한
+    this.clampSpeed();
+
     this.x += this.vx * dt;
     this.y += this.vy * dt;
     this.rotation += this.vx * 0.05 * dt;
@@ -36,6 +43,16 @@ export class Ball {
     if (this.y - this.radius < 0) {
       this.y = this.radius;
       this.vy = Math.abs(this.vy) * BALL_BOUNCE;
+    }
+  }
+
+  // 속도 벡터 크기를 최대값으로 제한
+  clampSpeed() {
+    const speed = Math.hypot(this.vx, this.vy);
+    if (speed > BALL_MAX_SPEED) {
+      const scale = BALL_MAX_SPEED / speed;
+      this.vx *= scale;
+      this.vy *= scale;
     }
   }
 

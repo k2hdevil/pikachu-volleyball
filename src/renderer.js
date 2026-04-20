@@ -1,4 +1,4 @@
-// Canvas 렌더링 - 배경, 엔티티, UI (원작 비주얼 재현)
+// Canvas 렌더링 - 배경(오프스크린 캐시), 엔티티, UI (원작 비주얼 재현)
 import {
   CANVAS_WIDTH, CANVAS_HEIGHT, GROUND_Y, COURT_LINE_Y,
   NET_X, NET_WIDTH, NET_Y, NET_HEIGHT, NET_TOP_RADIUS,
@@ -8,66 +8,82 @@ import {
 export class Renderer {
   constructor(ctx) {
     this.ctx = ctx;
+    // 오프스크린 캔버스: 정적 배경을 한 번만 그리고 캐시
+    this.bgCanvas = null;
+    this.bgReady = false;
+    this.initBackgroundCache();
   }
 
-  clear() {
-    this.ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-  }
-
-  drawBackground() {
-    const ctx = this.ctx;
+  // 정적 배경을 오프스크린 캔버스에 미리 렌더링
+  initBackgroundCache() {
+    this.bgCanvas = document.createElement('canvas');
+    this.bgCanvas.width = CANVAS_WIDTH;
+    this.bgCanvas.height = CANVAS_HEIGHT;
+    const bgCtx = this.bgCanvas.getContext('2d');
 
     // 하늘 그라데이션
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+    const skyGrad = bgCtx.createLinearGradient(0, 0, 0, GROUND_Y);
     skyGrad.addColorStop(0, COLORS.sky);
     skyGrad.addColorStop(1, COLORS.skyGradientBottom);
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, GROUND_Y);
+    bgCtx.fillStyle = skyGrad;
+    bgCtx.fillRect(0, 0, CANVAS_WIDTH, GROUND_Y);
 
     // 구름
-    this.drawCloud(60, 40, 40);
-    this.drawCloud(200, 25, 30);
-    this.drawCloud(340, 50, 35);
+    this.drawCloudTo(bgCtx, 60, 40, 40);
+    this.drawCloudTo(bgCtx, 200, 25, 30);
+    this.drawCloudTo(bgCtx, 340, 50, 35);
 
     // 산
-    ctx.fillStyle = COLORS.mountain;
-    ctx.beginPath();
-    ctx.moveTo(0, GROUND_Y - 30);
-    ctx.lineTo(80, GROUND_Y - 70);
-    ctx.lineTo(160, GROUND_Y - 30);
-    ctx.lineTo(240, GROUND_Y - 55);
-    ctx.lineTo(320, GROUND_Y - 25);
-    ctx.lineTo(400, GROUND_Y - 60);
-    ctx.lineTo(CANVAS_WIDTH, GROUND_Y - 20);
-    ctx.lineTo(CANVAS_WIDTH, GROUND_Y);
-    ctx.lineTo(0, GROUND_Y);
-    ctx.fill();
+    bgCtx.fillStyle = COLORS.mountain;
+    bgCtx.beginPath();
+    bgCtx.moveTo(0, GROUND_Y - 30);
+    bgCtx.lineTo(80, GROUND_Y - 70);
+    bgCtx.lineTo(160, GROUND_Y - 30);
+    bgCtx.lineTo(240, GROUND_Y - 55);
+    bgCtx.lineTo(320, GROUND_Y - 25);
+    bgCtx.lineTo(400, GROUND_Y - 60);
+    bgCtx.lineTo(CANVAS_WIDTH, GROUND_Y - 20);
+    bgCtx.lineTo(CANVAS_WIDTH, GROUND_Y);
+    bgCtx.lineTo(0, GROUND_Y);
+    bgCtx.fill();
 
-    ctx.fillStyle = COLORS.mountainLight;
-    ctx.beginPath();
-    ctx.moveTo(0, GROUND_Y - 10);
-    ctx.lineTo(120, GROUND_Y - 40);
-    ctx.lineTo(280, GROUND_Y - 15);
-    ctx.lineTo(CANVAS_WIDTH, GROUND_Y - 30);
-    ctx.lineTo(CANVAS_WIDTH, GROUND_Y);
-    ctx.lineTo(0, GROUND_Y);
-    ctx.fill();
+    bgCtx.fillStyle = COLORS.mountainLight;
+    bgCtx.beginPath();
+    bgCtx.moveTo(0, GROUND_Y - 10);
+    bgCtx.lineTo(120, GROUND_Y - 40);
+    bgCtx.lineTo(280, GROUND_Y - 15);
+    bgCtx.lineTo(CANVAS_WIDTH, GROUND_Y - 30);
+    bgCtx.lineTo(CANVAS_WIDTH, GROUND_Y);
+    bgCtx.lineTo(0, GROUND_Y);
+    bgCtx.fill();
 
     // 코트 바닥
-    ctx.fillStyle = COLORS.ground;
-    ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
+    bgCtx.fillStyle = COLORS.ground;
+    bgCtx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
 
     // 코트 라인
-    ctx.strokeStyle = COLORS.courtLine;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, COURT_LINE_Y);
-    ctx.lineTo(CANVAS_WIDTH, COURT_LINE_Y);
-    ctx.stroke();
+    bgCtx.strokeStyle = COLORS.courtLine;
+    bgCtx.lineWidth = 3;
+    bgCtx.beginPath();
+    bgCtx.moveTo(0, COURT_LINE_Y);
+    bgCtx.lineTo(CANVAS_WIDTH, COURT_LINE_Y);
+    bgCtx.stroke();
+
+    // 네트 (정적이므로 배경에 포함)
+    bgCtx.fillStyle = COLORS.net;
+    bgCtx.fillRect(NET_X - NET_WIDTH / 2, NET_Y, NET_WIDTH, NET_HEIGHT);
+    bgCtx.fillStyle = COLORS.netTop;
+    bgCtx.beginPath();
+    bgCtx.arc(NET_X, NET_Y, NET_TOP_RADIUS, 0, Math.PI * 2);
+    bgCtx.fill();
+    bgCtx.strokeStyle = COLORS.net;
+    bgCtx.lineWidth = 2;
+    bgCtx.stroke();
+
+    this.bgReady = true;
   }
 
-  drawCloud(x, y, size) {
-    const ctx = this.ctx;
+  drawCloudTo(ctx, x, y, size) {
     ctx.fillStyle = COLORS.cloud;
     ctx.beginPath();
     ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
@@ -76,19 +92,21 @@ export class Renderer {
     ctx.fill();
   }
 
+  clear() {
+    this.ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  }
+
+  // 캐시된 배경을 한 번에 복사 (매 프레임 재계산 불필요)
+  drawBackground() {
+    if (this.bgReady) {
+      this.ctx.drawImage(this.bgCanvas, 0, 0);
+    }
+  }
+
+  // 네트는 배경 캐시에 포함되므로 별도 호출 불필요
+  // 하위 호환성을 위해 빈 메서드 유지
   drawNet() {
-    const ctx = this.ctx;
-    // 기둥
-    ctx.fillStyle = COLORS.net;
-    ctx.fillRect(NET_X - NET_WIDTH / 2, NET_Y, NET_WIDTH, NET_HEIGHT);
-    // 상단 원형
-    ctx.fillStyle = COLORS.netTop;
-    ctx.beginPath();
-    ctx.arc(NET_X, NET_Y, NET_TOP_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = COLORS.net;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // 네트는 initBackgroundCache()에서 배경과 함께 캐시됨
   }
 
   drawPikachu(pikachu) {
@@ -279,5 +297,25 @@ export class Renderer {
     const text = scorer === 1 ? 'Player 1 Scores!' : 'Player 2 Scores!';
     ctx.strokeText(text, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
     ctx.fillText(text, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+  }
+
+  // 라운드 시작 전 "Ready" 표시 (페이드 효과)
+  drawRoundReady(timer) {
+    const ctx = this.ctx;
+    // 타이머 기반 투명도 (등장 시 선명 → 사라질 때 페이드)
+    const alpha = Math.min(timer / 30, 1.0);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    ctx.font = 'bold 36px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = COLORS.pikachu;
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 3;
+    ctx.strokeText('Ready', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+    ctx.fillText('Ready', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+
+    ctx.restore();
   }
 }
