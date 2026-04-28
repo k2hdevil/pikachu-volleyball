@@ -104,6 +104,61 @@ graph LR
     SRC --> EVAL_F
 ```
 
+## 배포 아키텍처 (AWS Amplify Hosting)
+
+```mermaid
+flowchart LR
+    subgraph Dev["🛠️ 개발 환경"]
+        KIRO["Kiro IDE<br/>AI Agent 하네스"]
+        LOCAL["로컬 소스<br/>src/*.js + index.html"]
+    end
+
+    subgraph GitHub["🐙 GitHub"]
+        REPO["k2hdevil/pikachu-volleyball<br/>main 브랜치"]
+    end
+
+    subgraph AWS["☁️ AWS"]
+        subgraph Amplify["AWS Amplify Hosting"]
+            BUILD["자동 빌드<br/>main push 트리거"]
+            CDN["Amazon CloudFront<br/>글로벌 CDN"]
+        end
+    end
+
+    subgraph Users["👥 사용자"]
+        DESKTOP["🖥️ 데스크톱<br/>키보드 조작"]
+        MOBILE["📱 모바일<br/>터치 조작"]
+    end
+
+    KIRO -->|"코드 작성"| LOCAL
+    LOCAL -->|"git push"| REPO
+    REPO -->|"webhook 트리거"| BUILD
+    BUILD -->|"정적 파일 배포"| CDN
+    CDN -->|"HTTPS"| DESKTOP
+    CDN -->|"HTTPS"| MOBILE
+```
+
+**배포 정보:**
+- 배포 URL: https://main.d3tu61r30359g3.amplifyapp.com/
+- 소스: GitHub `k2hdevil/pikachu-volleyball` → `main` 브랜치
+- 빌드 설정: Amplify 콘솔에서 구성
+- 배포 방식: 정적 호스팅 (HTML + JS, 서버리스 백엔드 없음)
+- CDN: CloudFront 자동 제공 (HTTPS, 글로벌 엣지 캐싱)
+- 배포 트리거: `main` 브랜치에 push 시 자동 빌드 및 배포
+
+## 전체 워크플로우 (개발 → 배포)
+
+```mermaid
+flowchart TD
+    REQ([사용자 기능 요청]) --> HARNESS["AI Agent 하네스<br/>plan → execute → evaluate 루프"]
+    HARNESS --> CODE["코드 변경<br/>src/*.js, index.html"]
+    CODE --> COMMIT["git commit<br/>컨벤셔널 커밋"]
+    COMMIT --> PUSH["git push origin main"]
+    PUSH --> AMPLIFY["Amplify 자동 빌드/배포"]
+    AMPLIFY --> LIVE["🌐 라이브 배포<br/>main.d3tu61r30359g3.amplifyapp.com"]
+    LIVE --> FEEDBACK([사용자 피드백])
+    FEEDBACK --> REQ
+```
+
 ## 핵심 설계 원칙
 
 | 원칙 | 설명 |
